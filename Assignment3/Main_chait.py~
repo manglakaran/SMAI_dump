@@ -1,0 +1,137 @@
+import math
+import csv
+import random
+import numpy as np
+
+Count = {} # For counting 'yes' / 'no'
+Count1 = {}
+AttrTypes = []
+
+def Extract():
+    f = open('bank.csv', 'rb')
+    lines = csv.reader(f)
+    temp = list(lines)
+    Data = []
+    for x in xrange(1, len(temp)):
+        t = []
+        temp[x][0] = temp[x][0].split(';')
+        for y in xrange(17):
+            if(y == 0 or y == 5 or y == 9 or y == 10 or y == 11 or y == 14):
+                continue
+            else:
+                t.append(temp[x][0][y])
+        for y in xrange(len(t)):
+            try:
+                t[y] = int(t[y])
+            except Exception:
+                t[y] = t[y].replace('"', '')
+        Data.append(t)
+    return Data
+
+def Shuffle(Data):
+    for _ in xrange(random.randint(5, 10)):
+        random.shuffle(Data)
+    return Data
+
+def SplitData(Data):
+    TrData = []
+    TeData = []
+    for i in Data:
+        if(len(TrData) <= 2000):
+            TrData.append(i)
+        elif(len(TeData) <= 2000):
+            TeData.append(i)
+        else:
+            break
+    return TrData, TeData
+
+def StandardDeviation(a):
+    Mean = (sum(a) / (len(a) + 0.00))
+    SD = 0
+    for i in a:
+        SD += (i - Mean)**2
+    SD /= (len(a) + 0.000)
+    SD = math.sqrt(SD)
+    return SD
+
+def NaiveBayesTrain(Data):
+    Count['yes'] = 0    
+    Count['no'] = 0    
+    Count1['yes'] = {}   
+    Count1['no'] = {}
+    global AttrTypes
+    AttrTypes = []
+
+    L = len(Data[0])
+    for i in xrange(L-1):
+        temp = []
+        for j in Data:
+            if(j[i] not in temp):
+                temp.append(j[i])
+        AttrTypes.append(temp)
+
+    for i in Data:
+        Count[i[-1]] += 1
+        L = len(i)
+        for j in xrange(L-1):
+            try:
+                Count1[i[-1]][i[j]] += 1
+            except KeyError:
+                Count1[i[-1]][i[j]] = 1
+    return AttrTypes
+
+def Verify(Data):
+    temp1 = Count['yes'] / (Count['yes'] + Count['no'] + 0.00)
+    temp2 = Count['no'] / (Count['yes'] + Count['no'] + 0.00)
+    Tot = 0.00
+    Corr = 0.00
+    for i in Data:
+        Ans1 = (temp1 + 0.000)
+        for j in xrange(len(i)-1):
+            Sum = 0
+            for k in AttrTypes[j]:
+                try:
+                    Sum += Count1['yes'][k]
+                except Exception:
+                    Sum += 0.00
+            Sum += 0.00
+            try:
+                Sum =  (Count1['yes'][i[j]])/ Sum
+            except Exception:
+                Sum = 0
+            Ans1 = Ans1 * Sum
+
+        Ans2 = (temp2 + 0.000)
+        for j in xrange(len(i)-1):
+            Sum = 0
+            for k in AttrTypes[j]:
+                try:
+                    Sum += Count1['no'][k]
+                except Exception:
+                    Sum += 0.00
+            Sum += 0.00
+            try:
+                Sum =  (Count1['no'][i[j]])/ Sum
+            except Exception:
+                Sum = 0
+            Ans2 = Ans2 * Sum
+        if(Ans1 > Ans2):
+           # print 'yes', i[-1]
+            if('yes' == i[-1]):
+                Corr+=1
+        else:
+            #print 'no', i[-1]
+            if('no' == i[-1]):
+                Corr+=1
+        Tot += 1
+    print "Accuracy : ", ((Corr +0.00) / Tot)
+
+Data = Extract()
+for i in xrange(10):
+    Data = Shuffle(Data)
+    Trdata, TeData = SplitData(Data)
+    NaiveBayesTrain(Trdata)
+    #print AttrTypes
+    Verify(TeData)
+    #break
+    #print Count['yes'], Count['no']

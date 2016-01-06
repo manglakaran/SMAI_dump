@@ -1,0 +1,21 @@
+import csv
+
+def readData():
+	with open('bank.csv', 'rb') as f:
+		reader = csv.reader(f)
+		elems = list(reader)
+
+		for row_c in xrange(1,len(elems)):
+			elems[row_c][0] = elems[row_c][0].split(";")
+			#print elems[row_c][0]
+			temp = []
+			for index in xrange(0,17):
+				if(index == 0 or index == 5 or index == 9  or index == 11 or index == 12 or index == 13 or index == 14):
+					continue
+                else:
+                	print index
+                	temp.append(elems[row_c][0][index])
+			print temp
+
+if __name__ == '__main__':
+	data = readData()	
